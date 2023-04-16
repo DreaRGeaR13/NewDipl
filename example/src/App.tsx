@@ -10,28 +10,37 @@ import {
 import axios from 'axios'
 import qs from 'qs'
 
-import { DnDCharacterStatsSheet, DnDCharacterProfileSheet, DnDCharacterSpellSheet, DnDCharacter } from 'dnd-character-sheets'
+import {
+  DnDCharacterStatsSheet,
+  DnDCharacterProfileSheet,
+  DnDCharacterSpellSheet,
+  DnDCharacter
+} from 'dnd-character-sheets'
 import 'dnd-character-sheets/dist/index.css'
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname } = useLocation()
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    window.scrollTo(0, 0)
+  }, [pathname])
 
-  return null;
+  return null
 }
 
 const App = (props: any) => {
-  const [character, setCharacter] = useState<DnDCharacter>(loadDefaultCharacter())
+  const [character, setCharacter] = useState<DnDCharacter>(
+    loadDefaultCharacter()
+  )
   const [navTop, setNavTop] = useState<number>(0)
   const [prevScrollpos, setPrevScrollpos] = useState<number>(window.pageYOffset)
   const [, setLoading] = useState<boolean>(false)
 
-  const { search } = useLocation();
+  const { search } = useLocation()
   useEffect(() => {
-    const characterToLoad = qs.parse(search, { ignoreQueryPrefix: true }).character
+    const characterToLoad = qs.parse(search, {
+      ignoreQueryPrefix: true
+    }).character
     if (characterToLoad) {
       setLoading(true)
       axios
@@ -39,14 +48,16 @@ const App = (props: any) => {
         .then((response: any) => {
           setLoading(false)
           try {
-            if (!Array.isArray(response.data) && typeof response.data === 'object') {
+            if (
+              !Array.isArray(response.data) &&
+              typeof response.data === 'object'
+            ) {
               console.log('Loaded Character - ' + characterToLoad)
               updateCharacter(response.data)
             } else {
               throw new Error('Json file does not contain a DnD character.')
             }
-          }
-          catch {
+          } catch {
             throw new Error('Json file does not contain a DnD character.')
           }
         })
@@ -56,7 +67,7 @@ const App = (props: any) => {
           setLoading(false)
         })
     }
-  }, [search]);
+  }, [search])
 
   const statsSheet = (
     <DnDCharacterStatsSheet
@@ -77,18 +88,20 @@ const App = (props: any) => {
     />
   )
 
-  window.onscroll = function() {onScroll()};
+  window.onscroll = function () {
+    onScroll()
+  }
   function onScroll() {
-    var currentScrollPos = window.pageYOffset;
+    var currentScrollPos = window.pageYOffset
     if (prevScrollpos > currentScrollPos || currentScrollPos < 20) {
       setNavTop(0)
     } else {
-      setNavTop(-280);
+      setNavTop(-280)
     }
     setPrevScrollpos(currentScrollPos)
   }
 
-  function loadDefaultCharacter () {
+  function loadDefaultCharacter() {
     let character: DnDCharacter = {}
     const lsData = localStorage.getItem('dnd-character-data')
     if (lsData) {
@@ -99,58 +112,62 @@ const App = (props: any) => {
     return character
   }
 
-  function updateCharacter (character: DnDCharacter) {
+  function updateCharacter(character: DnDCharacter) {
     setCharacter(character)
     localStorage.setItem('dnd-character-data', JSON.stringify(character))
   }
 
-  function exportCharacter () {
+  function exportCharacter() {
     const json = JSON.stringify(character, null, 2)
 
-    var a = document.createElement('a');
-    var file = new Blob([json], {type: 'application/json'});
-    a.href = URL.createObjectURL(file);
-    a.download = character.name ? character.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json' : 'dnd-character.json';
-    a.click();
+    var a = document.createElement('a')
+    var file = new Blob([json], { type: 'application/json' })
+    a.href = URL.createObjectURL(file)
+    a.download = character.name
+      ? character.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.json'
+      : 'dnd-character.json'
+    a.click()
   }
 
+  function importCharacter(event: any) {
+    if (event.target.files.length > 0) {
+      var fr = new FileReader()
 
-  function importCharacter (event: any) {
-    if (event.target.files.length > 0){
-      var fr = new FileReader();
-
-      fr.onload = function(e) { 
-        if (e.target && e.target.result && typeof e.target.result === 'string') {
+      fr.onload = function (e) {
+        if (
+          e.target &&
+          e.target.result &&
+          typeof e.target.result === 'string'
+        ) {
           loadCharacter(e.target.result)
         }
       }
-    
-      fr.readAsText(event.target.files[0]);
-      event.target.value = '';
+
+      fr.readAsText(event.target.files[0])
+      event.target.value = ''
     }
   }
 
   function loadCharacter(json: string) {
     try {
-      var result = JSON.parse(typeof json === 'string' ? json : '{}');
+      var result = JSON.parse(typeof json === 'string' ? json : '{}')
       if (!Array.isArray(result) && typeof result === 'object') {
         updateCharacter(result)
       } else {
         window.alert('Json file does not contain a DnD character.')
       }
-    }
-    catch {
+    } catch {
       window.alert('Json file does not contain a DnD character.')
     }
   }
 
   function clearCharacter() {
-    updateCharacter({ })
+    updateCharacter({})
   }
 
   function getDefaultRedirect(search: string | undefined) {
     let defaultRedirect = '/stats' + search
-    if (window.innerWidth < 992) { 
+    if (window.innerWidth < 992) {
       // is mobile device
       defaultRedirect = '/all' + search
     }
@@ -159,41 +176,123 @@ const App = (props: any) => {
 
   return (
     <div>
-      <nav className='navbar navbar-expand-lg navbar-dark fixed-top' style={{ backgroundColor: 'rgb(204, 10, 33)', top: navTop === 0 ? '' : navTop + 'px' }}>
-          <button className='navbar-toggler' type='button' data-toggle='collapse' data-target='#navbarSupportedContent' aria-controls='navbarSupportedContent' aria-expanded='false' aria-label='Toggle navigation'>
-              <span className='navbar-toggler-icon'></span>
-          </button>
-          <div style={{width:'100%'}}>
-            <div className='collapse navbar-collapse' id='navbarSupportedContent'>
-                <ul className='navbar-nav ml-lg-5' data-toggle='collapse' data-target='.navbar-collapse.show'>
-                    <li className='nav-item mr-lg-3'>
-                        <Link className={props.location.pathname === '/stats' ? 'nav-link active' : 'nav-link'} to='/stats'>Stats</Link>
-                    </li>
-                    <li className='nav-item mr-lg-3'>
-                        <Link className={props.location.pathname === '/profile' ? 'nav-link active' : 'nav-link'} to='/profile'>Profile</Link>
-                    </li>
-                    <li className='nav-item mr-lg-3'>
-                        <Link className={props.location.pathname === '/spells' ? 'nav-link active' : 'nav-link'} to='/spells'>Spells</Link>
-                    </li>
-                    <li className='nav-item mr-lg-3'>
-                        <Link className={props.location.pathname === '/all' ? 'nav-link active' : 'nav-link'} to='/all'>All</Link>
-                    </li>
-                </ul>
+      <nav
+        className='navbar navbar-expand-lg navbar-dark fixed-top'
+        style={{
+          backgroundColor: 'rgb(204, 10, 33)',
+          top: navTop === 0 ? '' : navTop + 'px'
+        }}
+      >
+        <button
+          className='navbar-toggler'
+          type='button'
+          data-toggle='collapse'
+          data-target='#navbarSupportedContent'
+          aria-controls='navbarSupportedContent'
+          aria-expanded='false'
+          aria-label='Toggle navigation'
+        >
+          <span className='navbar-toggler-icon'></span>
+        </button>
+        <div style={{ width: '100%' }}>
+          <div className='collapse navbar-collapse' id='navbarSupportedContent'>
+            <ul
+              className='navbar-nav ml-lg-5'
+              data-toggle='collapse'
+              data-target='.navbar-collapse.show'
+            >
+              <li className='nav-item mr-lg-3'>
+                <Link
+                  className={
+                    props.location.pathname === '/stats'
+                      ? 'nav-link active'
+                      : 'nav-link'
+                  }
+                  to='/stats'
+                >
+                  Характеристики
+                </Link>
+              </li>
+              <li className='nav-item mr-lg-3'>
+                <Link
+                  className={
+                    props.location.pathname === '/profile'
+                      ? 'nav-link active'
+                      : 'nav-link'
+                  }
+                  to='/profile'
+                >
+                  Профиль
+                </Link>
+              </li>
+              <li className='nav-item mr-lg-3'>
+                <Link
+                  className={
+                    props.location.pathname === '/spells'
+                      ? 'nav-link active'
+                      : 'nav-link'
+                  }
+                  to='/spells'
+                >
+                  Заклинания
+                </Link>
+              </li>
+              <li className='nav-item mr-lg-3'>
+                <Link
+                  className={
+                    props.location.pathname === '/all'
+                      ? 'nav-link active'
+                      : 'nav-link'
+                  }
+                  to='/all'
+                >
+                  Все
+                </Link>
+              </li>
+            </ul>
 
-                <ul className='navbar-nav ml-auto mr-lg-5' data-toggle='collapse' data-target='.navbar-collapse.show'>
-                    <li className='nav-item mr-lg-3'>
-                        <button className='btn btn-dark' onClick={() => exportCharacter()}>Export</button>
-                        <input style={{display: 'none'}} type="file" id="selectFiles" accept="application/json" onChange={(e) => importCharacter(e)} />
-                        <button className='btn btn-dark' onClick={() => document.getElementById("selectFiles")?.click()}>Import</button>
-                        <button className='btn btn-dark' onClick={() => window.print()}>Print</button>
-                        <button className='btn btn-danger' onClick={() => clearCharacter()}>Clear</button>
-                    </li>
-                </ul>
-            </div>
+            <ul
+              className='navbar-nav ml-auto mr-lg-5'
+              data-toggle='collapse'
+              data-target='.navbar-collapse.show'
+            >
+              <li className='nav-item mr-lg-3'>
+                {/* <button
+                  className='btn btn-dark'
+                  onClick={() => exportCharacter()}
+                >
+                  Export
+                </button>
+                <input
+                  style={{ display: 'none' }}
+                  type='file'
+                  id='selectFiles'
+                  accept='application/json'
+                  onChange={(e) => importCharacter(e)}
+                /> */}
+                {/* <button
+                  className='btn btn-dark'
+                  onClick={() =>
+                    document.getElementById('selectFiles')?.click()
+                  }
+                >
+                  Import
+                </button> */}
+                <button className='btn btn-dark' onClick={() => window.print()}>
+                  Печать
+                </button>
+                <button
+                  className='btn btn-danger'
+                  onClick={() => clearCharacter()}
+                >
+                  Очистить
+                </button>
+              </li>
+            </ul>
           </div>
+        </div>
       </nav>
       <div className='app-holder'>
-
         <Switch>
           <Route exact path='/'>
             <ScrollToTop />
@@ -222,10 +321,8 @@ const App = (props: any) => {
             {spellSheet}
           </Route>
         </Switch>
-        
-
       </div>
-      <footer className="no-print page-footer font-small text-white pt-4" style={{ backgroundColor: 'rgb(211, 49, 21)' }}>
+      {/* <footer className="no-print page-footer font-small text-white pt-4" style={{ backgroundColor: 'rgb(211, 49, 21)' }}>
         <div className="container-fluid container-xl text-center text-md-left mt-2 mb-3">
             <div className="row">
               <div className="col-md-6 mt-md-0 mt-3">
@@ -260,9 +357,8 @@ const App = (props: any) => {
         <div className="footer-copyright text-center mt-5 py-2 text-white small" style={{ backgroundColor: 'rgb(204, 10, 33)' }}>
           MIT © Daryl Buckle 2020
         </div>
-      </footer>
+      </footer> */}
     </div>
-    
   )
 }
 
